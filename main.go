@@ -84,6 +84,19 @@ func (p *PackageInformation) ToPrettyJSON() ([]byte, error) {
 	return content, nil
 }
 
+// end func takes string splits it on separator and returns string
+func end(s, sep string) string {
+	ss := strings.Split(s, sep)
+	return ss[len(ss)-1]
+}
+
+// begin func takes string splits it on separator and returns string
+func begin(s, sep string) string {
+	ss := strings.Split(s, sep)
+	ss = ss[:len(ss)-1]
+	return strings.Join(ss, sep)
+}
+
 // ExtractCommands func takes doc *goquery.Document input and returns []Command, error
 func ExtractCommands(doc *goquery.Document) ([]Command, error) {
 	commands := make([]Command, 0)
@@ -133,28 +146,35 @@ func ExtractSources(doc *goquery.Document) ([]Source, error) {
 
 }
 
-// end func takes no input and returns s []string string
-func end(s []string) string {
-	return s[len(s)-1]
-}
-
 // ExtractApplication func takes doc *goquery.Document input and returns Application, error
 func ExtractApplication(doc *goquery.Document) (Application, error) {
 	application := Application{}
 	// Find the review items
-	doc.Find(".package").Each(func(i int, s *goquery.Selection) {
-		name := s.Find(".application").First().Text()
-		application.Name = strings.TrimSpace(strings.ToLower(name))
-		description := s.Find("p").First().Text()
-		application.Description = strings.TrimSpace(description)
-	})
-	doc.Find(".sect1").Each(func(i int, s *goquery.Selection) {
-		block := s.Find(".sect1").First().Text()
-		if block != "" {
-			version := end(strings.Split(block, "-"))
+	doc.Find("title").Each(func(i int, s *goquery.Selection) {
+		title := s.Text()
+		if title != "" {
+			title = strings.TrimSpace(title)
+			name := begin(title, "-")
+			version := end(title, "-")
+			// Check title for spaces... make stuff up
+			if strings.Contains(title, " ") {
+				name = strings.Join(strings.Split(title, " "), "-")
+				version = "1.0.0"
+			}
+			application.Name = strings.TrimSpace(strings.ToLower(name))
 			application.Version = strings.TrimSpace(version)
 		}
 	})
+
+	doc.Find(".package").Each(func(i int, s *goquery.Selection) {
+		if application.Name == "" {
+			name := s.Find(".application").First().Text()
+			application.Name = strings.TrimSpace(strings.ToLower(name))
+		}
+		description := s.Find("p").First().Text()
+		application.Description = strings.TrimSpace(description)
+	})
+
 	return application, nil
 
 }
@@ -278,9 +298,9 @@ func main() {
 					filepath := path.Join(destdir, filename)
 					err := ioutil.WriteFile(filepath, yml, 0644)
 					check(err)
-					os.Exit(0)
+				} else {
+					fmt.Printf("%s\n", yml)
 				}
-				fmt.Printf("%s\n", yml)
 			}
 			if asjson {
 				jsn, err := pkgInfo.ToPrettyJSON()
@@ -294,9 +314,9 @@ func main() {
 					filepath := path.Join(destdir, filename)
 					err := ioutil.WriteFile(filepath, jsn, 0644)
 					check(err)
-					os.Exit(0)
+				} else {
+					fmt.Printf("%s\n", jsn)
 				}
-				fmt.Printf("%s\n", jsn)
 			}
 		}
 	}

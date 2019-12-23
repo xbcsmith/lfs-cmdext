@@ -300,8 +300,8 @@ make</kbd>
 	app, err := ExtractApplication(doc)
 	assert.Assert(t, is.Nil(err))
 	fmt.Printf("APPLICATION NAME : %s\n", app.Name)
-	fmt.Printf("APPLICATION VERSION : %s\n", app.Name)
-	fmt.Printf("APPLICATION DESCRIPTION : %s\n", app.Name)
+	fmt.Printf("APPLICATION VERSION : %s\n", app.Version)
+	fmt.Printf("APPLICATION DESCRIPTION : %s\n", app.Description)
 	deps, err := ExtractDependencies(doc)
 	assert.Assert(t, is.Nil(err))
 	for _, req := range deps.Requires {
@@ -316,7 +316,7 @@ make</kbd>
 }
 
 // TestExtractApplication func takes no input and returns t *testing.T
-func TestExtractApplication(t *testing.T) {
+func TestExtractSources(t *testing.T) {
 	htmlPkg := `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -659,8 +659,266 @@ rm -v /usr/share/doc/freetype-2.10.1/freetype-config.1</kbd>
 	}
 	app, err := ExtractApplication(doc)
 	assert.Assert(t, is.Nil(err))
-	assert.Equal(t, app.Name, "freetype2")
+	assert.Equal(t, app.Name, "freetype")
 	assert.Equal(t, app.Version, "2.10.1")
+	fmt.Printf("APPLICATION NAME : %s\n", app.Name)
+	fmt.Printf("APPLICATION VERSION : %s\n", app.Version)
+	fmt.Printf("APPLICATION DESCRIPTION : %s\n", app.Description)
+	deps, err := ExtractDependencies(doc)
+	assert.Assert(t, is.Nil(err))
+	for _, req := range deps.Requires {
+		fmt.Printf("REQUIRES : %s\n", req)
+	}
+	for _, rec := range deps.Recommended {
+		fmt.Printf("RECOMMENDED : %s\n", rec)
+	}
+	for _, opt := range deps.Optional {
+		fmt.Printf("OPTIONAL : %s\n", opt)
+	}
+	pkg, err := CreatePackageInformation([]byte(htmlPkg))
+	assert.Assert(t, is.Nil(err))
+	yml, err := pkg.ToYAML()
+	assert.Assert(t, is.Nil(err))
+	fmt.Printf("%s\n", yml)
+}
+
+// TestExtractCommands func takes no input and returns t *testing.T
+func TestExtractApplication(t *testing.T) {
+	htmlPkg := `<?xml version="1.0" encoding="iso-8859-1" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content=
+    "application/xhtml+xml; charset=iso-8859-1" />
+    <title>
+      Configuring the JAVA environment
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+  </head>
+  <body class="blfs" id="blfs-2019-12-22">
+    <div class="navheader">
+      <h4>
+        Beyond Linux<sup>®</sup> From Scratch <span class="phrase">(System
+        V</span> Edition) - Version 2019-12-22
+      </h4>
+      <h3>
+        Chapter&nbsp;13.&nbsp;Programming
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="openjdk.html" title=
+          "OpenJDK-12.0.2">Prev</a>
+          <p>
+            OpenJDK-12.0.2
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="apache-ant.html" title=
+          "apache-ant-1.10.7">Next</a>
+          <p>
+            apache-ant-1.10.7
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="prog.html" title=
+          "Chapter&nbsp;13.&nbsp;Programming">Up</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Beyond Linux® From Scratch     (System V Edition) - Version 2019-12-22">
+          Home</a>
+        </li>
+      </ul>
+    </div>
+    <div class="sect1" lang="en" xml:lang="en">
+      <h1 class="sect1">
+        <a id="ojdk-conf" name="ojdk-conf"></a>Configuring the JAVA
+        environment
+      </h1>
+      <div class="sect2" lang="en" xml:lang="en">
+        <h2 class="sect2">
+          <a id="java-profile" name="java-profile"></a>Setting up the
+          environment
+        </h2>
+        <p>
+          After the package installation is complete, the next step is to
+          make sure that the system can properly find the files. If you set
+          up your login scripts as recommended in <a class="xref" href=
+          "../postlfs/profile.html" title="The Bash Shell Startup Files">The
+          Bash Shell Startup Files</a>, update the environment by creating
+          the <code class="filename">openjdk.sh</code> script, as the
+          <code class="systemitem">root</code> user:
+        </p>
+        <pre class="root">
+<kbd class="command">cat &gt; /etc/profile.d/openjdk.sh &lt;&lt; "EOF"
+<code class="literal"># Begin /etc/profile.d/openjdk.sh
+
+# Set JAVA_HOME directory
+JAVA_HOME=/opt/jdk
+
+# Adjust PATH
+pathappend $JAVA_HOME/bin
+
+# Add to MANPATH
+pathappend $JAVA_HOME/man MANPATH
+
+# Auto Java CLASSPATH: Copy jar files to, or create symlinks in, the
+# /usr/share/java directory. Note that having gcj jars with OpenJDK 8
+# may lead to errors.
+
+AUTO_CLASSPATH_DIR=/usr/share/java
+
+pathprepend . CLASSPATH
+
+for dir in $(find ${AUTO_CLASSPATH_DIR} -type d 2&gt;/dev/null); do
+    pathappend $dir CLASSPATH
+done
+
+for jar in $(find ${AUTO_CLASSPATH_DIR} -name "*.jar" 2&gt;/dev/null); do
+    pathappend $jar CLASSPATH
+done
+
+export JAVA_HOME
+unset AUTO_CLASSPATH_DIR dir jar
+
+# End /etc/profile.d/openjdk.sh</code>
+EOF</kbd>
+</pre>
+        <p>
+          If <a class="xref" href="../postlfs/sudo.html" title=
+          "Sudo-1.8.29">Sudo-1.8.29</a> is installed, the super user should
+          have access to the above variables. Execute the following commands
+          as the <code class="systemitem">root</code> user:
+        </p>
+        <pre class="root">
+<kbd class="command">cat &gt; /etc/sudoers.d/java &lt;&lt; "EOF"
+<code class="literal">Defaults env_keep += JAVA_HOME
+Defaults env_keep += CLASSPATH</code>
+EOF</kbd>
+</pre>
+        <p>
+          For allowing <span class="command"><strong>mandb</strong></span> to
+          include the OpenJDK man pages in its database, issue, as the
+          <code class="systemitem">root</code> user:
+        </p>
+        <pre class="root">
+<kbd class="command">cat &gt;&gt; /etc/man_db.conf &lt;&lt; "EOF" &amp;&amp;
+<code class="literal"># Begin Java addition
+MANDATORY_MANPATH     /opt/jdk/man
+MANPATH_MAP           /opt/jdk/bin     /opt/jdk/man
+MANDB_MAP             /opt/jdk/man     /var/cache/man/jdk
+# End Java addition</code>
+EOF
+
+mkdir -p /var/cache/man &amp;&amp;
+mandb -c /opt/jdk/man</kbd>
+</pre>
+      </div>
+      <div class="sect2" lang="en" xml:lang="en">
+        <h2 class="sect2">
+          <a id="ojdk-certs" name="ojdk-certs"></a>Setting up the Certificate
+          Authority Certificates for Java
+        </h2>
+        <p>
+          <span class="application">OpenJDK</span> uses its own format for
+          the CA certificates. The Java security modules use <code class=
+          "envar">$JAVA_HOME</code><code class=
+          "filename">/lib/security/cacerts</code> by default. In order to
+          keep all the certificates in one place, we use <code class=
+          "filename">/etc/ssl/java/cacerts</code>. The instructions on the
+          <a class="xref" href="../postlfs/make-ca.html" title=
+          "make-ca-1.5">make-ca-1.5</a> page previously created the file
+          located in <code class="filename">/etc/ssl/java</code>. Setup a
+          symlink in the default location as the <code class=
+          "systemitem">root</code> user:
+        </p>
+        <pre class="root">
+<kbd class=
+"command">ln -sfv /etc/pki/tls/java/cacerts /opt/jdk/lib/security/cacerts</kbd>
+</pre>
+        <p>
+          Use the following command to check if the <code class=
+          "filename">cacerts</code> file has been successfully installed:
+        </p>
+        <pre class="root">
+<kbd class="command">/opt/jdk/bin/keytool -list -cacerts</kbd>
+</pre>
+        <p>
+          At the prompt <code class="computeroutput">Enter keystore
+          password:</code>, enter <strong class=
+          "userinput"><code>changeit</code></strong> (the default) or just
+          press the <span class="quote">&ldquo;<span class=
+          "quote">Enter</span>&rdquo;</span> key. If the <code class=
+          "filename">cacerts</code> file was installed correctly, you will
+          see a list of the certificates with related information for each
+          one. If not, you need to reinstall them.
+        </p>
+        <p>
+          If you later install a new JVM, you just have to create the symlink
+          in the default location to be able to use the cacerts.
+        </p>
+      </div>
+      <p class="updated">
+        Last updated on 2019-02-09 20:26:31 -0600
+      </p>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="openjdk.html" title=
+          "OpenJDK-12.0.2">Prev</a>
+          <p>
+            OpenJDK-12.0.2
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="apache-ant.html" title=
+          "apache-ant-1.10.7">Next</a>
+          <p>
+            apache-ant-1.10.7
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="prog.html" title=
+          "Chapter&nbsp;13.&nbsp;Programming">Up</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Beyond Linux® From Scratch     (System V Edition) - Version 2019-12-22">
+          Home</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
+`
+
+	doc, err := ReadDoc([]byte(htmlPkg))
+	assert.Assert(t, is.Nil(err))
+	commands, err := ExtractCommands(doc)
+	assert.Assert(t, is.Nil(err))
+	for _, cmd := range commands {
+		fmt.Printf("INDEX : %d\n", cmd.Index)
+		fmt.Printf("COMMAND : %s\n", cmd.Cmd)
+	}
+	sources, err := ExtractSources(doc)
+	assert.Assert(t, is.Nil(err))
+	for _, src := range sources {
+		fmt.Printf("SOURCE ARCHIVE : %s\n", src.Archive)
+		fmt.Printf("SOURCE MD5 : %s\n", src.MD5Sum)
+		fmt.Printf("SOURCE SIZE : %s\n", src.Size)
+		fmt.Printf("SOURCE DISK SPACE : %s\n", src.OnDisk)
+		fmt.Printf("SOURCE BUILD TIME : %s\n", src.BuildTime)
+	}
+	app, err := ExtractApplication(doc)
+	assert.Assert(t, is.Nil(err))
+	fmt.Printf("APPLICATION NAME : %s\n", app.Name)
+	fmt.Printf("APPLICATION VERSION : %s\n", app.Version)
+	fmt.Printf("APPLICATION DESCRIPTION : %s\n", app.Description)
 	deps, err := ExtractDependencies(doc)
 	assert.Assert(t, is.Nil(err))
 	for _, req := range deps.Requires {

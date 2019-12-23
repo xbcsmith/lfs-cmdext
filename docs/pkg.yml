@@ -1,0 +1,24 @@
+commands:
+  - cmd: ./configure --prefix=/usr
+    index: 0
+  - cmd: make
+    index: 1
+  - cmd: make install
+    index: 2
+dependencies:
+    optional:
+      - quk
+    recommendend:
+      - caz
+      - baz
+    requires:
+      - bar
+description: foo of brixton
+name: foo
+sources:
+  - archive: https://downloads.sourceforge.net/freetype/freetype-2.10.1.tar.xz
+    build_time: 0.2 SBU (with additional documentation)
+    md5sum: bd42e75127f8431923679480efb5ba8f
+    ondisk: 30 MB (with additional documentation)
+    size: 2.3 MB
+version: 1.0.0

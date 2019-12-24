@@ -116,8 +116,6 @@ func ExtractCommands(doc *goquery.Document) ([]Command, error) {
 // ExtractSources func takes doc *goquery.Document input and returns []Source, error
 func ExtractSources(doc *goquery.Document) ([]Source, error) {
 	sources := make([]Source, 0)
-
-	// Find the review items
 	doc.Find(".package .itemizedlist .compact").Each(func(i int, s *goquery.Selection) {
 		source := Source{}
 		s.Find("p").Each(func(i int, s *goquery.Selection) {
@@ -150,11 +148,10 @@ func ExtractSources(doc *goquery.Document) ([]Source, error) {
 // ExtractApplication func takes doc *goquery.Document input and returns Application, error
 func ExtractApplication(doc *goquery.Document) (Application, error) {
 	application := Application{}
-	// Find the review items
 	doc.Find("title").Each(func(i int, s *goquery.Selection) {
 		titlestr := s.Text()
 		if titlestr != "" {
-			title := strconv.QuoteToASCII(strings.TrimSpace(titlestr))
+			title := strings.TrimSpace(titlestr)
 			name := begin(title, "-")
 			version := end(title, "-")
 			if strings.Contains(title, " ") {
@@ -166,8 +163,8 @@ func ExtractApplication(doc *goquery.Document) (Application, error) {
 				name = begin(t, "-")
 				version = end(t, "-")
 			}
+			title = strconv.QuoteToASCII(strings.TrimSpace(titlestr))
 			if strings.Contains(title, "\\u00a0") {
-				fmt.Println("title contains stuff")
 				t := end(title, "\\u00a0")
 				name = begin(t, "-")
 				version = end(t, "-")
@@ -209,22 +206,19 @@ func ExtractDependencies(doc *goquery.Document) (Dependencies, error) {
 	var requires []string
 	var recommended []string
 	var optional []string
-	// Find the review items
 	doc.Find(".package .required").Each(func(i int, s *goquery.Selection) {
 		s.Find("a").Each(func(i int, a *goquery.Selection) {
-			requires = append(requires, strings.ToLower(a.Text()))
+			requires = append(requires, strings.ToLower(strings.TrimSpace(a.Text())))
 		})
 	})
-	// Find the review items
 	doc.Find(".package .recommended").Each(func(i int, s *goquery.Selection) {
 		s.Find("a").Each(func(i int, a *goquery.Selection) {
-			recommended = append(recommended, strings.ToLower(a.Text()))
+			recommended = append(recommended, strings.ToLower(strings.TrimSpace(a.Text())))
 		})
 	})
-	// Find the review items
 	doc.Find(".package .optional").Each(func(i int, s *goquery.Selection) {
 		s.Find("a").Each(func(i int, a *goquery.Selection) {
-			optional = append(optional, strings.ToLower(a.Text()))
+			optional = append(optional, strings.ToLower(strings.TrimSpace(a.Text())))
 		})
 	})
 	dependencies.Requires = requires

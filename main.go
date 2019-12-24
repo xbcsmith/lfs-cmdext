@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"flag"
@@ -151,17 +152,30 @@ func ExtractApplication(doc *goquery.Document) (Application, error) {
 	application := Application{}
 	// Find the review items
 	doc.Find("title").Each(func(i int, s *goquery.Selection) {
-		title := s.Text()
-		if title != "" {
-			title = strings.TrimSpace(title)
+		titlestr := s.Text()
+		if titlestr != "" {
+			title := strconv.QuoteToASCII(strings.TrimSpace(titlestr))
 			name := begin(title, "-")
 			version := end(title, "-")
-			// Check title for spaces... make stuff up
 			if strings.Contains(title, " ") {
 				name = strings.Join(strings.Split(title, " "), "-")
 				version = "1.0.0"
 			}
-			application.Name = strings.TrimSpace(strings.ToLower(name))
+			if strings.Contains(title, "&nbsp;") {
+				t := end(title, "&nbsp;")
+				name = begin(t, "-")
+				version = end(t, "-")
+			}
+			if strings.Contains(title, "\\u00a0") {
+				fmt.Println("title contains stuff")
+				t := end(title, "\\u00a0")
+				name = begin(t, "-")
+				version = end(t, "-")
+				if strings.HasSuffix(version, `"`) {
+					version = version[:len(version)-1]
+				}
+			}
+			application.Name = strings.ToLower(strings.TrimSpace(name))
 			application.Version = strings.TrimSpace(version)
 		}
 	})

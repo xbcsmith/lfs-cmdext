@@ -108,8 +108,11 @@ func ExtractCommands(doc *goquery.Document) ([]Command, error) {
 			Cmd:   s.Text(),
 		}
 		commands = append(commands, command)
-		index = index + 1
+		index++
 	})
+	if len(commands) == 0 {
+		return commands, fmt.Errorf("commands are empty")
+	}
 	return commands, nil
 }
 
@@ -120,29 +123,30 @@ func ExtractSources(doc *goquery.Document) ([]Source, error) {
 		source := Source{}
 		s.Find("p").Each(func(i int, s *goquery.Selection) {
 			block := s.Text()
-			switch true {
-			case strings.Contains(block, "(HTTP)"):
+			switch {
+			case strings.Contains(block, "(HTTP):"):
 				link := s.Find(".ulink").Text()
 				source.Archive = strings.TrimSpace(link)
-			case strings.Contains(block, "MD5"):
+			case strings.Contains(block, "MD5 sum:"):
 				md5 := strings.Split(block, ":")[1]
 				source.MD5Sum = strings.TrimSpace(md5)
-			case strings.Contains(block, "size"):
+			case strings.Contains(block, "size:"):
 				size := strings.Split(block, ":")[1]
 				source.Size = strings.TrimSpace(size)
-			case strings.Contains(block, "disk space"):
+			case strings.Contains(block, "disk space required:"):
 				ondisk := strings.Split(block, ":")[1]
 				source.OnDisk = strings.TrimSpace(ondisk)
-			case strings.Contains(block, "build time"):
+			case strings.Contains(block, "build time:"):
 				bt := strings.Split(block, ":")[1]
 				source.BuildTime = strings.TrimSpace(bt)
 			}
-
 		})
 		sources = append(sources, source)
 	})
+	if len(sources) == 0 {
+		return sources, fmt.Errorf("sources is empty")
+	}
 	return sources, nil
-
 }
 
 // ExtractApplication func takes doc *goquery.Document input and returns Application, error
@@ -186,8 +190,15 @@ func ExtractApplication(doc *goquery.Document) (Application, error) {
 		application.Description = strings.TrimSpace(description)
 	})
 
-	return application, nil
+	if application.Name == "" {
+		return application, fmt.Errorf("application name empty")
+	}
 
+	if application.Version == "" {
+		return application, fmt.Errorf("application version empty")
+	}
+
+	return application, nil
 }
 
 // ReadDoc func takes b []byte input and returns *goquery.Document, error
@@ -224,8 +235,10 @@ func ExtractDependencies(doc *goquery.Document) (Dependencies, error) {
 	dependencies.Requires = requires
 	dependencies.Recommended = recommended
 	dependencies.Optional = optional
+	if len(requires) == 0 && len(recommended) == 0 && len(optional) == 0 {
+		return dependencies, fmt.Errorf("no dependencies found")
+	}
 	return dependencies, nil
-
 }
 
 // CreatePackageInformation func takes b []byte input and returns *PackageInformation, error
@@ -237,22 +250,22 @@ func CreatePackageInformation(b []byte) (*PackageInformation, error) {
 	}
 	deps, err := ExtractDependencies(doc)
 	if err != nil {
-		return pkgInfo, err
+		fmt.Printf("WARNING : %s\n", err)
 	}
 	pkgInfo.Dependencies = deps
 	cmds, err := ExtractCommands(doc)
 	if err != nil {
-		return pkgInfo, err
+		fmt.Printf("WARNING : %s\n", err)
 	}
 	pkgInfo.Commands = cmds
 	srcs, err := ExtractSources(doc)
 	if err != nil {
-		return pkgInfo, err
+		fmt.Printf("WARNING : %s\n", err)
 	}
 	pkgInfo.Sources = srcs
 	app, err := ExtractApplication(doc)
 	if err != nil {
-		return pkgInfo, err
+		fmt.Printf("WARNING : %s\n", err)
 	}
 	pkgInfo.Name = app.Name
 	pkgInfo.Version = app.Version
@@ -278,8 +291,8 @@ func main() {
 		debug    bool
 	)
 	flag.StringVar(&destdir, "destination", "/tmp/pkgs", "Path to write files to disk")
-	flag.BoolVar(&asjson, "asjson", false, "Output JSON")
-	flag.BoolVar(&asyaml, "asyaml", true, "Output YAML")
+	flag.BoolVar(&asjson, "json", false, "Output JSON")
+	flag.BoolVar(&asyaml, "yaml", true, "Output YAML (default)")
 	flag.BoolVar(&noindent, "noindent", false, "No Indent for JSON")
 	flag.BoolVar(&write, "write-to-disk", false, "Write files to disk")
 	flag.BoolVar(&debug, "debug", false, "Turn debugging on")
@@ -302,9 +315,9 @@ func main() {
 				yml, err := pkgInfo.ToYAML()
 				check(err)
 				if write {
-					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".yml"
+					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".yaml"
 					filepath := path.Join(destdir, filename)
-					err := ioutil.WriteFile(filepath, yml, 0644)
+					err := ioutil.WriteFile(filepath, yml, 0644) //nolint:gosec
 					check(err)
 				} else {
 					fmt.Printf("%s\n", yml)
@@ -320,7 +333,7 @@ func main() {
 				if write {
 					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".json"
 					filepath := path.Join(destdir, filename)
-					err := ioutil.WriteFile(filepath, jsn, 0644)
+					err := ioutil.WriteFile(filepath, jsn, 0644) // nolint:gosec
 					check(err)
 				} else {
 					fmt.Printf("%s\n", jsn)

@@ -905,31 +905,16 @@ mandb -c /opt/jdk/man</kbd>
 		fmt.Printf("INDEX : %d\n", cmd.Index)
 		fmt.Printf("COMMAND : %s\n", cmd.Cmd)
 	}
-	sources, err := ExtractSources(doc)
-	assert.Assert(t, is.Nil(err))
-	for _, src := range sources {
-		fmt.Printf("SOURCE ARCHIVE : %s\n", src.Archive)
-		fmt.Printf("SOURCE MD5 : %s\n", src.MD5Sum)
-		fmt.Printf("SOURCE SIZE : %s\n", src.Size)
-		fmt.Printf("SOURCE DISK SPACE : %s\n", src.OnDisk)
-		fmt.Printf("SOURCE BUILD TIME : %s\n", src.BuildTime)
-	}
-	app, err := ExtractApplication(doc)
-	assert.Assert(t, is.Nil(err))
+	_, serr := ExtractSources(doc)
+	assert.Equal(t, "sources is empty", serr.Error(), "error string not expected")
+	app, aerr := ExtractApplication(doc)
+	assert.Assert(t, is.Nil(aerr))
+	assert.Equal(t, app.Name, "configuring-the-java-environment", "Expected name to be configurinng-the-java-environment")
+	assert.Equal(t, app.Version, "1.0.0", "Expected version to be 1.0.0")
 	fmt.Printf("APPLICATION NAME : %s\n", app.Name)
 	fmt.Printf("APPLICATION VERSION : %s\n", app.Version)
-	fmt.Printf("APPLICATION DESCRIPTION : %s\n", app.Description)
-	deps, err := ExtractDependencies(doc)
-	assert.Assert(t, is.Nil(err))
-	for _, req := range deps.Requires {
-		fmt.Printf("REQUIRES : %s\n", req)
-	}
-	for _, rec := range deps.Recommended {
-		fmt.Printf("RECOMMENDED : %s\n", rec)
-	}
-	for _, opt := range deps.Optional {
-		fmt.Printf("OPTIONAL : %s\n", opt)
-	}
+	_, derr := ExtractDependencies(doc)
+	assert.Equal(t, "no dependencies found", derr.Error(), "error string not expected")
 	pkg, err := CreatePackageInformation([]byte(htmlPkg))
 	assert.Assert(t, is.Nil(err))
 	yml, err := pkg.ToYAML()

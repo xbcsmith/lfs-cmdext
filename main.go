@@ -21,12 +21,12 @@ import (
 
 // PackageInformation struct for packageinformation
 type PackageInformation struct {
-	Commands     []Command    `json:"commands" yaml:"commands"`
+	Name         string       `json:"name" yaml:"name"`
+	Version      string       `json:"version" yaml:"version"`
 	Dependencies Dependencies `json:"dependencies" yaml:"dependencies"`
 	Description  string       `json:"description" yaml:"description"`
-	Name         string       `json:"name" yaml:"name"`
 	Sources      []Source     `json:"sources" yaml:"sources"`
-	Version      string       `json:"version" yaml:"version"`
+	Commands     []Command    `json:"commands" yaml:"commands"`
 }
 
 // Command struct for command
@@ -99,7 +99,7 @@ func begin(s, sep string) string {
 }
 
 // ExtractCommands func takes doc *goquery.Document input and returns []Command, error
-func ExtractCommands(doc *goquery.Document) ([]Command, error) {
+func ExtractCommands(doc *goquery.Document) ([]Command, error) { // nolint:unparam
 	commands := make([]Command, 0)
 	var index int
 	doc.Find("kbd").Each(func(i int, s *goquery.Selection) {
@@ -108,19 +108,19 @@ func ExtractCommands(doc *goquery.Document) ([]Command, error) {
 			Cmd:   s.Text(),
 		}
 		commands = append(commands, command)
-		index = index + 1
+		index++
 	})
 	return commands, nil
 }
 
 // ExtractSources func takes doc *goquery.Document input and returns []Source, error
-func ExtractSources(doc *goquery.Document) ([]Source, error) {
+func ExtractSources(doc *goquery.Document) ([]Source, error) { // nolint:unparam
 	sources := make([]Source, 0)
 	doc.Find(".package .itemizedlist .compact").Each(func(i int, s *goquery.Selection) {
 		source := Source{}
 		s.Find("p").Each(func(i int, s *goquery.Selection) {
 			block := s.Text()
-			switch true {
+			switch {
 			case strings.Contains(block, "(HTTP)"):
 				link := s.Find(".ulink").Text()
 				source.Archive = strings.TrimSpace(link)
@@ -137,16 +137,14 @@ func ExtractSources(doc *goquery.Document) ([]Source, error) {
 				bt := strings.Split(block, ":")[1]
 				source.BuildTime = strings.TrimSpace(bt)
 			}
-
 		})
 		sources = append(sources, source)
 	})
 	return sources, nil
-
 }
 
 // ExtractApplication func takes doc *goquery.Document input and returns Application, error
-func ExtractApplication(doc *goquery.Document) (Application, error) {
+func ExtractApplication(doc *goquery.Document) (Application, error) { // nolint:unparam
 	application := Application{}
 	doc.Find("title").Each(func(i int, s *goquery.Selection) {
 		titlestr := s.Text()
@@ -187,7 +185,6 @@ func ExtractApplication(doc *goquery.Document) (Application, error) {
 	})
 
 	return application, nil
-
 }
 
 // ReadDoc func takes b []byte input and returns *goquery.Document, error
@@ -201,7 +198,7 @@ func ReadDoc(b []byte) (*goquery.Document, error) {
 }
 
 // ExtractDependencies func takes doc *goquery.Document input and returns Dependencies, error
-func ExtractDependencies(doc *goquery.Document) (Dependencies, error) {
+func ExtractDependencies(doc *goquery.Document) (Dependencies, error) { // nolint:unparam
 	dependencies := Dependencies{}
 	var requires []string
 	var recommended []string
@@ -225,7 +222,6 @@ func ExtractDependencies(doc *goquery.Document) (Dependencies, error) {
 	dependencies.Recommended = recommended
 	dependencies.Optional = optional
 	return dependencies, nil
-
 }
 
 // CreatePackageInformation func takes b []byte input and returns *PackageInformation, error
@@ -302,9 +298,9 @@ func main() {
 				yml, err := pkgInfo.ToYAML()
 				check(err)
 				if write {
-					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".yml"
+					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".yaml"
 					filepath := path.Join(destdir, filename)
-					err := ioutil.WriteFile(filepath, yml, 0644)
+					err := ioutil.WriteFile(filepath, yml, 0644) // nolint:gosec
 					check(err)
 				} else {
 					fmt.Printf("%s\n", yml)
@@ -320,7 +316,7 @@ func main() {
 				if write {
 					filename := pkgInfo.Name + "-" + pkgInfo.Version + ".json"
 					filepath := path.Join(destdir, filename)
-					err := ioutil.WriteFile(filepath, jsn, 0644)
+					err := ioutil.WriteFile(filepath, jsn, 0644) // nolint:gosec
 					check(err)
 				} else {
 					fmt.Printf("%s\n", jsn)

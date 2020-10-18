@@ -4,26 +4,31 @@ LFS Command Extractor
 
 ## Description
 
-a Go LFS Command Extractor used to extract package information from the LFS/BLFS books.
+a Go LFS Command Extractor used to extract package information from the
+LFS/BLFS books.
 
 ## Build
 
 `make`
 
+## Install
+
+`make DESTDIR=$(go env GOPATH) install`
+
 ## Usage
 
-```
+```text
 Usage of ./bin/cmdext:
   -asjson
-    	Output JSON
+     Output JSON
   -asyaml
-    	Output YAML (default true)
+     Output YAML (default true)
   -debug
-    	Turn debugging on
+     Turn debugging on
   -destination string
-    	Path to write files to disk (default "/tmp/pkgs")
+     Path to write files to disk (default "/tmp/pkgs")
   -write-to-disk
-    	Write files to disk
+     Write files to disk
 
 ```
 
@@ -41,7 +46,7 @@ tar -xvf blfs-book-9.0-systemd-html.tar.xz
 
 ### Extract Commands
 
-```
+```bash
 cmdext general/tcl.html
 ```
 
@@ -115,7 +120,7 @@ version: 8.6.9
 
 ### More
 
-```
+```bash
 cmdext --asjson general/tcl.html
 
 cmdext --asjson --noindent general/tcl.html
